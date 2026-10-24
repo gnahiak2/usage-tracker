@@ -1,0 +1,18 @@
+.build/
+.build-*/
+.swiftpm/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# Local cache, credentials, and exported diagnostics must never be committed.
+*.cache
+*.log
+.env
+.env.*
+usage-cache.json
+session-cookies.json
+
+# macOS
+.DS_Store
+._*
