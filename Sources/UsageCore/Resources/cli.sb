@@ -1,0 +1,60 @@
+;; cli.sb — the Seatbelt profile used to ask Codex, Antigravity and Grok one quota question.
+;;
+;; Parameters set by Sandbox.wrap:
+;;   HOME       this user's home folder
+;;   STATE      the CLI's own state folder (~/.codex, ~/.gemini, ~/.grok)
+;;   EXEC       the CLI executable
+;;   EXECDIR    the CLI's install folder
+;;   INTERP     its interpreter, when it is a script
+;;   INTERPDIR  that interpreter's install folder
+;;   PTMP       the app's private 0700 working directory
+;;
+;; Only Antigravity needs the helper, keychain and shared temp parameters; for the others they point
+;; at a path that does not exist. The CLI may start no program outside its own install folder, so no
+;; MCP server, hook or plugin configured anywhere can run, and it can read nothing of the user's but
+;; its own state. Network stays open because the answer comes from the vendor.
+(version 1)
+(allow default)
+
+(deny process-exec)
+(allow process-exec
+    (literal (param "EXEC"))
+    (literal (param "INTERP"))
+    (subpath (param "EXECDIR"))
+    (subpath (param "INTERPDIR")))
+
+(deny file-read* file-write*
+    (subpath "/Users")
+    (subpath (param "HOME"))
+    (subpath "/Volumes")
+    (subpath "/private/tmp")
+    (subpath "/private/var/folders"))
+
+;; Node and Go resolve paths component by component; stat stays allowed.
+(allow file-read-metadata)
+
+(allow file-read* file-write*
+    (subpath (param "STATE"))
+    (subpath (param "PTMP")))
+
+(allow file-read*
+    (subpath (param "EXECDIR"))
+    (literal (param "EXEC"))
+    (literal (param "INTERP"))
+    (subpath (param "INTERPDIR")))
+
+(deny file-write* (require-not (require-any
+    (subpath (param "STATE"))
+    (subpath (param "PTMP")))))
+
+(allow file-write*
+    (literal "/dev/null")
+    (literal "/dev/tty")
+    (regex #"^/dev/fd/")
+    (regex #"^/dev/ttys"))
+
+;; Antigravity only.
+(allow process-exec (literal (param "HELPER")))
+(allow file-read* file-write*
+    (subpath (param "KEYCHAINS"))
+    (subpath (param "SHAREDTMP")))
